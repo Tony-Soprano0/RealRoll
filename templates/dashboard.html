@@ -4,17 +4,19 @@
 <div class="flex flex-col gap-8">
   {% for entry in video_data %}
     {% set video = entry.video %}
-    <div class="bg-gray-900 rounded-2xl shadow-lg overflow-hidden flex flex-col sm:flex-row">
+    <div class="bg-gray-900 rounded-2xl shadow-lg overflow-hidden flex flex-col sm:flex-row items-stretch max-h-[400px]">
       <!-- Video Section -->
-      <div class="sm:w-1/2 bg-black">
-        <video controls class="w-full h-full object-contain bg-black" onplay="incrementView({{ video.id }})">
+      <div class="sm:w-1/2 bg-black flex">
+        <video controls 
+              class="w-full h-full object-contain bg-black flex-1"
+              onplay="incrementView({{ video.id }})">
           <source src="{{ video.blob_url }}" type="video/mp4">
           Your browser does not support the video tag.
         </video>
       </div>
-    
+      
       <!-- Content Section -->
-      <div class="sm:w-1/2 p-4 flex flex-col gap-3">
+      <div class="sm:w-1/2 p-4 flex flex-col gap-3 overflow-y-auto">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
           <div>
             <!-- Title + PG Rating -->
