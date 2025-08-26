@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}RealRoll{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            accent: '#871e1e',
+            accent2: '#ad2a42',
+            cardbg: '#1f1f1f',
+            sidebarbg: '#111',
+            inputbg: '#2a2a2a',
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-sidebarbg border-r border-gray-800 flex flex-col p-6 space-y-6">
+    <a href="/dashboard" class="text-2xl font-bold tracking-wide text-accent hover:text-accent2 transition">RealRoll</a>
+    
+    <form method="GET" action="/dashboard" class="relative mt-4">
+      <input type="text" name="search" placeholder="Search Title" value="{{ request.args.get('search', '') }}" 
+             class="w-full rounded-lg bg-inputbg border border-gray-700 px-4 py-2 text-sm placeholder-gray-400 focus:ring-2 focus:ring-accent focus:outline-none transition" />
+      <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-full hover:bg-accent/20 transition">
+        <span class="sr-only">Search</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-accent">
+          <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 1 0 0 13.5 6.75 6.75 0 0 0 0-13.5ZM2.25 10.5a8.25 8.25 0 1 1 14.59 5.28l4.69 4.69a.75.75 0 1 1-1.06 1.06l-4.69-4.69A8.25 8.25 0 0 1 2.25 10.5Z" clip-rule="evenodd" />
+        </svg>
+      </button>
+    </form>
+
+    <nav class="flex flex-col space-y-3 mt-6">
+      {% if session.get('IsCreator') == 1 %}
+      <a href="/creator" class="px-4 py-2 rounded-lg bg-accent/10 text-accent hover:bg-accent hover:text-white transition">Share</a>
+      {% endif %}
+      <a href="/profile" class="px-4 py-2 rounded-lg hover:bg-gray-800 transition">Account</a>
+      <a href="/logout" class="px-4 py-2 rounded-lg bg-accent hover:bg-accent2 text-white font-semibold transition">Logout</a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main class="flex-1 flex flex-col">
+    <!-- Top bar / notifications -->
+    <div class="flex justify-between items-center bg-gray-900/80 backdrop-blur-md border-b border-gray-800 px-6 py-3 shadow">
+      <h1 class="text-xl font-semibold text-gray-100">{% block header %}Dashboard{% endblock %}</h1>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <!-- Toast container -->
+  <div id="toast-container" class="fixed top-6 right-6 z-50 flex flex-col gap-3"></div>
+
+  {% set flash_messages = get_flashed_messages(with_categories=true) %}
+  <script>
+    function showToast(message, type) {
+      const toast = document.createElement('div');
+      toast.className = `px-5 py-3 rounded-xl shadow-lg text-sm font-medium transition-all bg-gray-800 text-white border-l-4 ${type === 'error' ? 'border-red-500' : 'border-green-500'} opacity-100`;
+      toast.textContent = message;
+      document.getElementById('toast-container').appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add('opacity-0');
+        setTimeout(() => toast.remove(), 500);
+      }, 3000);
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      const flashMessages = JSON.parse(`{{ flash_messages|tojson|safe }}`);
+      flashMessages.forEach(function(item) {
+        const [category, message] = item;
+        showToast(message, category);
+      });
+    });
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

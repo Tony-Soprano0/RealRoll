@@ -1,0 +1,106 @@
+
+{% extends 'base.html' %}
+{% block title %}Upload Video{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto mt-12">
+  <!-- Hero / Header -->
+  <div class="bg-gradient-to-r from-accent to-accent2 rounded-3xl p-8 shadow-2xl text-white text-center">
+    <h1 class="text-4xl font-extrabold mb-2">Share Your Story</h1>
+    <p class="text-gray-200 text-lg">Upload your videos and reach your audience instantly.</p>
+  </div>
+
+  <!-- Flash messages -->
+  <div class="mt-6">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="mb-3 px-5 py-3 rounded-2xl text-sm font-medium shadow {{ 'bg-red-600/20 text-red-100' if category == 'error' else 'bg-green-600/20 text-green-100' }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Upload Card -->
+  <div class="bg-gray-800 rounded-3xl shadow-xl mt-6 p-8 flex flex-col gap-6">
+    <form method="POST" enctype="multipart/form-data" id="uploadForm" class="flex flex-col gap-5">
+      
+      <!-- Title & Description -->
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label class="block text-sm font-bold mb-1 text-gray-200">Title</label>
+          <input type="text" name="title" required placeholder="Enter video title"
+                 class="w-full rounded-xl bg-gray-700 border border-gray-600 px-4 py-3 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-accent focus:outline-none transition">
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-1 text-gray-200">Overview</label>
+          <textarea name="description" rows="3" placeholder="Write something about your video..."
+                    class="w-full rounded-xl bg-gray-700 border border-gray-600 px-4 py-3 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-accent focus:outline-none resize-none transition"></textarea>
+        </div>
+      </div>
+
+      <!-- Publisher / Genre / Tags -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-bold mb-1 text-gray-200">Provider</label>
+          <input type="text" name="publisher" placeholder="Your provider"
+                 class="w-full rounded-xl bg-gray-700 border border-gray-600 px-4 py-3 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-accent focus:outline-none transition">
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-1 text-gray-200">Genre</label>
+          <input type="text" name="genre" placeholder="e.g., Comedy, Tech"
+                 class="w-full rounded-xl bg-gray-700 border border-gray-600 px-4 py-3 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-accent focus:outline-none transition">
+        </div>
+      </div>
+
+      <!-- Age Rating & File -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-bold mb-1 text-gray-200">Age Limit</label>
+          <select name="age_rating" required
+                  class="w-full rounded-xl bg-gray-700 border border-gray-600 px-4 py-3 text-sm text-white focus:ring-2 focus:ring-accent focus:outline-none transition">
+            <option value="">Select Rating</option>
+            <option value="G">G</option>
+            <option value="PG">PG</option>
+            <option value="PG-13">PG-13</option>
+            <option value="R">R</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-bold mb-1 text-gray-200">File</label>
+          <input type="file" name="video" accept="video/*" required
+                 class="w-full rounded-xl bg-gray-700 border border-gray-600 px-4 py-3 text-sm text-white focus:ring-2 focus:ring-accent focus:outline-none transition">
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div id="progressBarContainer" class="hidden w-full bg-gray-700 rounded-xl h-4 mt-2 overflow-hidden">
+        <div id="progressBar" class="bg-accent h-4 rounded-xl transition-all duration-300" style="width:0%"></div>
+      </div>
+
+      <!-- Upload Button -->
+      <button type="submit"
+              class="w-full py-3 rounded-2xl bg-gradient-to-r from-accent to-accent2 hover:from-accent2 hover:to-accent text-white font-bold text-lg transition shadow-lg">
+        Upload Video
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Upload progress JS -->
+<script>
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+  const bar = document.getElementById('progressBar');
+  const container = document.getElementById('progressBarContainer');
+  container.classList.remove('hidden');
+  let progress = 0;
+  bar.style.width = '0%';
+  const interval = setInterval(() => {
+    progress += 12;
+    bar.style.width = progress + '%';
+    if(progress >= 100) clearInterval(interval);
+  }, 100);
+});
+</script>
+{% endblock %}

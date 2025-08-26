@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Rounded background -->
+  <rect width="64" height="64" rx="16" ry="16" fill="#871e1e"></rect>
+  
+  <!-- Letter R -->
+  <text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" font-family="Arial, sans-serif" font-size="36" fill="white" font-weight="bold">
+    R
+  </text>
+</svg>

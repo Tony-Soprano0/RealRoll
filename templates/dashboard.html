@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="flex flex-col gap-8">
+  {% for entry in video_data %}
+    {% set video = entry.video %}
+    <div class="bg-gray-900 rounded-2xl shadow-lg overflow-hidden flex flex-col sm:flex-row">
+      <!-- Video Section -->
+      <div class="sm:w-1/2 bg-black">
+        <video controls class="w-full h-full object-contain bg-black" onplay="incrementView({{ video.id }})">
+          <source src="{{ video.blob_url }}" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    
+      <!-- Content Section -->
+      <div class="sm:w-1/2 p-4 flex flex-col gap-3">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+          <div>
+            <!-- Title + PG Rating -->
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              {{ video.title }}
+              {% if entry.age_rating %}
+                <span class="px-2 py-0.5 text-xs rounded-full bg-gray-700 text-gray-200 border border-gray-600">
+                  {{ entry.age_rating }}
+                </span>
+              {% endif %}
+            </h2>
+            <div class="text-sm text-gray-400">
+              {{ video.publisher or 'N/A' }} &middot;
+            </div>
+          </div>
+          <div class="flex items-center gap-2 mt-2 sm:mt-0">
+            <!-- Like Button -->
+            <button class="like-btn group p-2 rounded-full hover:bg-accent/20 transition" title="Like" data-video-id="{{ video.id }}" onclick="toggleLike(this)">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                class="w-6 h-6 like-icon {% if entry.user_liked %}text-accent{% else %}text-gray-400{% endif %}">
+                <path d="M7.493 18.5c-1.463-.695-2.701-1.746-3.566-3.046C3.063 14.154 2.5 12.613 2.5 11c0-3.59 2.91-6.5 
+                        6.5-6.5 1.532 0 2.938.54 4.043 1.437.176.145.438.145.614 0C14.762 5.04 16.168 4.5 17.7 4.5c3.59 
+                        0 6.5 2.91 6.5 6.5 0 1.613-.563 3.154-1.427 4.454-.865 1.3-2.103 2.351-3.566 3.046L12 21.5l-4.507-3z"/>
+              </svg>
+            </button>
+            <span class="text-sm text-gray-400 like-count" id="like-count-{{ video.id }}">{{ entry.total_likes or 0 }}</span>
+
+            <!-- Views -->
+            <span class="flex items-center gap-1 text-sm text-gray-400 ml-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5">
+                <path d="M12 4.5c-5.799 0-10.385 3.59-11.734 8.5C1.615 17.91 6.201 21.5 12 21.5s10.385-3.59 
+                        11.734-8.5C22.385 8.09 17.799 4.5 12 4.5zm0 13a4.5 4.5 0 110-9 4.5 4.5 0 010 9z"/>
+              </svg>
+              <span id="view-count-{{ video.id }}">{{ video.view_count or 0 }}</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Star Rating -->
+        <div class="flex flex-col items-start gap-1">
+          <!-- Stars Row -->
+          <div class="flex items-center gap-1" id="star-row-{{ video.id }}">
+            {% for i in range(1, 6) %}
+              <button type="button" onclick="rateVideo({{ video.id }}, {{ i }}, this)">
+                <svg class="w-6 h-6 star-icon {% if entry.user_rating and entry.user_rating >= i %}text-yellow-400{% else %}text-gray-600{% endif %} hover:text-yellow-300 transition"
+                  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 .587l3.668 7.431 8.2 1.193-5.934 5.782 
+                          1.401 8.172L12 18.897l-7.335 3.868 
+                          1.401-8.172L.132 9.211l8.2-1.193z"/>
+                </svg>
+              </button>
+            {% endfor %}
+          </div>
+          
+          <!-- Average Rating -->
+          <span class="text-sm text-gray-400" id="avg-rating-{{ video.id }}">
+            Rating: {{ entry.avg_rating or 'No ratings' }}
+          </span>
+        </div>
+
+
+        <!-- Comments Preview -->
+        <div class="mt-2">
+          <h4 class="font-semibold text-gray-300 mb-2">Comments</h4>
+          <div class="flex flex-col gap-2">
+            {% for comment in entry.comments[:2] %}
+              <div class="bg-gray-800 rounded-lg px-3 py-2 flex items-start gap-2 relative">
+                <!-- Avatar -->
+                <div class="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-xs font-bold text-white mt-1">
+                  {{ comment.user.username[0]|upper }}
+                </div>
+                <!-- Comment Body -->
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 text-xs text-gray-400">
+                    <span class="font-semibold text-accent">{{ comment.user.username }}</span>
+                  </div>
+                  <div class="text-sm">{{ comment.content }}</div>
+                </div>
+              </div>
+            {% else %}
+              <div class="text-gray-500 text-sm">No comments.</div>
+            {% endfor %}
+            {% if entry.comments|length > 2 %}
+              <button class="text-accent text-sm mt-1 hover:underline" onclick="openCommentsModal({{ video.id }})">
+                View all comments ({{ entry.comments|length }})
+              </button>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Add Comment Form -->
+        <form method="POST" action="/dashboard" class="mt-2 flex items-center gap-2">
+          <input type="hidden" name="video_id" value="{{ video.id }}">
+          
+          <!-- Comment box -->
+          <textarea 
+            name="comment" 
+            placeholder="Your thoughts" 
+            class="flex-1 rounded-lg bg-gray-800 border border-gray-700 px-3 py-2 text-sm resize-none focus:ring-2 focus:ring-accent focus:outline-none"
+            rows="1"></textarea>
+          
+          <!-- Post button -->
+          <button 
+            type="submit" 
+            class="px-4 py-2 rounded bg-accent hover:bg-accent2 text-white font-semibold transition">
+            Post
+          </button>
+        </form>
+      </div>
+    </div>    
+  {% else %}
+    <div class="bg-gray-900 rounded-2xl shadow-lg p-8 text-center text-gray-400">No videos found.</div>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  function toggleLike(btn) {
+    const videoId = btn.getAttribute('data-video-id');
+    fetch('/like', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'video_id=' + encodeURIComponent(videoId)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        const icon = btn.querySelector('.like-icon');
+        const count = document.getElementById('like-count-' + videoId);
+        if (data.liked) {
+          icon.classList.add('text-accent');
+          icon.classList.remove('text-gray-400');
+        } else {
+          icon.classList.remove('text-accent');
+          icon.classList.add('text-gray-400');
+        }
+        count.textContent = data.total_likes;
+      }
+    });
+  }
+  function incrementView(videoId) {
+    fetch('/view', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'video_id=' + encodeURIComponent(videoId)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        const count = document.getElementById('view-count-' + videoId);
+        count.textContent = data.view_count;
+      }
+    });
+  }
+  function showEditComment(btn, commentId, content) {
+    const commentDiv = btn.closest('.flex-1').parentElement;
+    const contentDiv = commentDiv.querySelector('.text-sm');
+    const form = document.createElement('form');
+    form.className = 'flex gap-2 mt-2';
+    form.innerHTML = `<input type='text' class='rounded-lg bg-gray-800 border border-gray-700 px-3 py-1 text-sm text-white flex-1' value="${content}" />
+      <button type='submit' class='px-3 py-1 rounded bg-accent hover:bg-accent2 text-white text-xs font-semibold transition'>Save</button>
+      <button type='button' class='px-3 py-1 rounded bg-gray-700 text-white text-xs font-semibold transition' onclick='this.closest("form").remove();'>Cancel</button>`;
+    form.onsubmit = function(e) {
+      e.preventDefault();
+      const newContent = form.querySelector('input').value;
+      fetch('/edit_comment', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'comment_id=' + encodeURIComponent(commentId) + '&content=' + encodeURIComponent(newContent)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          contentDiv.textContent = data.content;
+          form.remove();
+          showToast('Comment updated!', 'success');
+        } else {
+          showToast(data.error || 'Failed to update comment', 'error');
+        }
+      });
+    };
+    contentDiv.parentElement.appendChild(form);
+  }
+  function deleteComment(btn, commentId, videoId) {
+    if (!confirm('Delete this comment?')) return;
+    fetch('/delete_comment', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'comment_id=' + encodeURIComponent(commentId)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Remove comment from DOM
+        const commentDiv = btn.closest('.bg-gray-800');
+        commentDiv.remove();
+        showToast('Comment deleted!', 'success');
+      } else {
+        showToast(data.error || 'Failed to delete comment', 'error');
+      }
+    });
+  }
+  function rateVideo(videoId, rating, btn) {
+    fetch('/rate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'video_id=' + encodeURIComponent(videoId) + '&rating=' + encodeURIComponent(rating)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Update star colors
+        const starRow = document.getElementById('star-row-' + videoId);
+        const stars = starRow.querySelectorAll('.star-icon');
+        for (let i = 0; i < stars.length; i++) {
+          if (i < rating) {
+            stars[i].classList.add('text-yellow-400');
+            stars[i].classList.remove('text-gray-600');
+          } else {
+            stars[i].classList.remove('text-yellow-400');
+            stars[i].classList.add('text-gray-600');
+          }
+        }
+        // Update average rating
+        document.getElementById('avg-rating-' + videoId).textContent = '(' + (data.avg_rating || 'Not rated yet') + ')';
+      }
+    });
+  }
+  </script>
+{% endblock %}
