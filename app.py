@@ -3,6 +3,7 @@ from flask_session import Session
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 import urllib
+import pyodbc
 import os
 from datetime import timedelta
 from werkzeug.utils import secure_filename
@@ -35,20 +36,55 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 Session(app)
 
 # --- Azure SQL / SQLAlchemy setup ---
-server = os.environ['SQL_SERVER']
-database = os.environ['SQL_DATABASE']
-username = os.environ['SQL_USERNAME']
-password = os.environ['SQL_PASSWORD']
-driver = '{ODBC Driver 18 for SQL Server}'
+server = os.environ['SQL_SERVER'].strip()                
+database = os.environ['SQL_DATABASE'].strip()            
+username = os.environ['SQL_USERNAME'].strip()            
+password = os.environ['SQL_PASSWORD'].strip()            
 
-params = urllib.parse.quote_plus(
-    f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password};'
-    f'Connection Timeout=30;Command Timeout=30;Encrypt=yes;TrustServerCertificate=no;'
+# For pymssql, don't modify the username - use it as-is
+# SQLAlchemy connection string for pymssql
+app.config["SQLALCHEMY_DATABASE_URI"] = (
+    f"mssql+pymssql://{username}:{password}@{server}:1433/{database}"
+    f"?charset=utf8&timeout=60&login_timeout=60"
 )
-app.config['SQLALCHEMY_DATABASE_URI'] = f'mssql+pyodbc:///?odbc_connect={params}'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
+
+# Test connection with pymssql
+# Test connection with pymssql
+try:
+    import pymssql
+    
+    # For Azure SQL, the username might need to be in full format
+    full_username = username
+    if '@' not in username and server:
+        # Extract server name from FQDN (realroll from realroll.database.windows.net)
+        server_name = server.split('.')[0]
+        full_username = f"{username}@{server_name}"
+    
+    conn = pymssql.connect(
+        server=server,
+        user=full_username,
+        password=password,
+        database=database,
+        timeout=60,
+        login_timeout=60,
+        port=1433,
+        as_dict=False
+    )
+    print("✅ Flask can connect to Azure SQL via pymssql")
+    cursor = conn.cursor()
+    cursor.execute("SELECT @@VERSION")
+    version = cursor.fetchone()
+    print(f"Connected to: {version[0][:50]}...")
+    conn.close()
+except Exception as e:
+    print("❌ Flask connection test failed:", e)
+    print(f"Trying to connect to: {server}")
+    print(f"Full username: {full_username if 'full_username' in locals() else username}")
+    print("Make sure Azure SQL firewall allows Codespaces connections!")
+
 migrate = Migrate(app, db)
 
 # --- Models remain the same ---
@@ -770,4 +806,4 @@ def rate_video():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5003)
+    app.run(debug=True, host='0.0.0.0', port=5006)

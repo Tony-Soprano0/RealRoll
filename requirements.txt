@@ -10,3 +10,4 @@ Werkzeug
 Flask-Migrate
 supabase
 python-dotenv
+pymssql
