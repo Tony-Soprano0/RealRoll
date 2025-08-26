@@ -1,94 +1,105 @@
-# DoomScroll - Social Media App
+# RealRoll
 
-A Flask-based social media application inspired by Instagram Reels and TikTok. This project provides a platform for users to share and discover short-form video content.
+RealRoll is a Flask-based short-form video app (Reels/TikTok style) where users can upload, browse, and manage videos. It includes creator/consumer modes, profiles, and notifications. Storage is backed by Supabase, and data is stored in Azure SQL via SQLAlchemy.
 
 ## Features
 
 - User authentication and registration
-- Video upload and sharing
-- Feed browsing for consumers
+- Video upload to Supabase Storage
+- Consumer feed browsing
 - Creator dashboard for content management
-- User profiles with bio and avatar support
-- Notification system
-- Responsive web interface
+- Profiles with bio and avatar
+- Likes, comments, ratings, notifications
+- Responsive HTML/CSS frontend
 
 ## Tech Stack
 
-- **Backend**: Flask (Python)
-- **Database**: SQLAlchemy with Alembic migrations
-- **Frontend**: HTML, CSS, JavaScript
-- **Session Management**: Flask-Session
-- **Development**: Docker container support
+- Backend: Flask
+- ORM/Migrations: SQLAlchemy + Flask-Migrate
+- Database: Azure SQL (via `pyodbc`)
+- Storage: Supabase buckets (`RealRoll`, `avatars`)
+- Sessions: Flask-Session (filesystem)
+- CI/CD: GitHub Actions → Azure Web App
 
-## Installation
+## Getting Started
 
-1. **Clone the repository**
-   ```bash
-   git clone <your-repository-url>
-   cd socrll-it-main
-   ```
+1) Clone and enter the project
+```bash
+git clone <your-repo-ssh-or-https-url>
+cd realroll
+```
 
-2. **Create a virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+2) Create and activate a virtual environment
+```bash
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+```
 
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+3) Install dependencies
+```bash
+pip install -r requirements.txt
+```
 
-4. **Set up environment variables**
-   Create a `.env` file in the root directory:
-   ```
-   SECRET_KEY=your-secret-key-here
-   DATABASE_URL=sqlite:///app.db
-   ```
+4) Environment variables
+Create a `.env` file in the project root with at least:
+```
+Please request the secrets from the owner.
+```
 
-5. **Initialize the database**
-   ```bash
-   flask db upgrade
-   ```
+5) Initialize the database
+```bash
+export FLASK_APP=app.py  # Windows PowerShell: setx FLASK_APP app.py (then reopen shell)
+flask db upgrade
+```
 
-6. **Run the application**
-   ```bash
-   python app.py
-   ```
-
-The application will be available at `http://localhost:5000`
+6) Run the app
+```bash
+python app.py
+```
+Visit http://localhost:5000
 
 ## Project Structure
 
 ```
-socrll-it-main/
-├── app.py                 # Main Flask application
-├── requirements.txt       # Python dependencies
-├── migrations/           # Database migrations
-├── static/              # CSS, JS, and static assets
-├── templates/           # HTML templates
-├── .devcontainer/       # Docker development setup
-└── README.md           # This file
+realroll/
+├── app.py                # Flask application
+├── requirements.txt      # Dependencies
+├── migrations/           # Alembic migrations
+├── static/               # CSS and assets
+├── templates/            # Jinja2 templates
+├── .github/workflows/    # CI/CD (Azure deploy)
+└── README.md
 ```
 
-## Usage
+## Deployment (GitHub Actions → Azure Web App)
 
-1. **Register/Login**: Create an account or log in to access the platform
-2. **Consumer Mode**: Browse and watch videos from other creators
-3. **Creator Mode**: Upload and manage your own video content
-4. **Profile**: Customize your profile with bio and avatar
+This repo includes a workflow at `.github/workflows/main_realroll.yml`.
 
-## Development
+1) In your GitHub repo, add the following Actions secrets (Settings → Secrets and variables → Actions):
+   - `AZUREAPPSERVICE_CLIENTID_9E738BEB976D428594193AE4C6207B99`
+   - `AZUREAPPSERVICE_TENANTID_A5F6051A946E423487A6EB4062487D2D`
+   - `AZUREAPPSERVICE_SUBSCRIPTIONID_B23C360DF64E41FC81DDA66EC8E23A32`
 
-This project includes Docker support for development. You can use the `.devcontainer` configuration to run the application in a containerized environment.
+2) Ensure `app-name` in the workflow matches your Azure Web App name.
+
+3) Push to `main`. The workflow will build and deploy.
+
+## Notes
+
+- Requirements: If you use environment loading or Supabase, ensure `python-dotenv` and `supabase` are installed. Add them to `requirements.txt` if missing:
+  ```
+  python-dotenv
+  supabase
+  ```
+- SSH pushing to GitHub is supported. Make sure your SSH key is added to your GitHub account and that the remote is set to `git@github.com:<you>/RealRoll.git`.
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+3. Commit your changes
+4. Open a pull request
 
 ## License
 
-This project is open source and available under the [MIT License](LICENSE).
+MIT

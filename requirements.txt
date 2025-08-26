@@ -8,3 +8,5 @@ Flask-Session
 pyodbc
 Werkzeug
 Flask-Migrate
+supabase
+python-dotenv
